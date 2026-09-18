@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>鏡頭選型工作台</title>
+
+<!-- PWA：可加到手機主畫面，全螢幕開啟像 App 一樣 -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c8501f">
+<link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="選型工作台">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#eef1f3;
+    --surface:#ffffff;
+    --surface-2:#e2e7ea;
+    --border:#c7d0d5;
+    --text:#131b1f;
+    --muted:#55666d;
+    --accent:#c8501f;
+    --accent-soft:#f0dccf;
+    --accent-2:#0e7a75;
+    --ok:#1f8a52;
+    --ok-soft:#dbf0e2;
+    --danger:#c23b3b;
+    --danger-soft:#f6dcdc;
+    --focus:#0e7a75;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10161a;
+      --surface:#171f24;
+      --surface-2:#1e282e;
+      --border:#2c3940;
+      --text:#e7eef0;
+      --muted:#93a3aa;
+      --accent:#ff8a52;
+      --accent-soft:#3a2a20;
+      --accent-2:#4fd1c5;
+      --ok:#4ade80;
+      --ok-soft:#173224;
+      --danger:#ff7a7a;
+      --danger-soft:#3a2020;
+      --focus:#4fd1c5;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10161a;
+    --surface:#171f24;
+    --surface-2:#1e282e;
+    --border:#2c3940;
+    --text:#e7eef0;
+    --muted:#93a3aa;
+    --accent:#ff8a52;
+    --accent-soft:#3a2a20;
+    --accent-2:#4fd1c5;
+    --ok:#4ade80;
+    --ok-soft:#173224;
+    --danger:#ff7a7a;
+    --danger-soft:#3a2020;
+    --focus:#4fd1c5;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"IBM Plex Sans", -apple-system, "Noto Sans TC", sans-serif;
+    padding-inline:16px;
+    padding-block:20px 40px;
+    max-width:1180px;
+    margin-inline:auto;
+  }
+  h1,h2,h3{ text-wrap:balance; margin:0; }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+
+  header{
+    display:flex; flex-wrap:wrap; align-items:baseline; gap:10px 18px;
+    padding-bottom:16px; margin-bottom:20px;
+    border-bottom:1px solid var(--border);
+  }
+  header h1{ font-size:1.5rem; font-weight:700; letter-spacing:-0.01em; }
+  header .tag{
+    font-family:"IBM Plex Mono", monospace; font-size:0.72rem; letter-spacing:0.06em;
+    color:var(--accent-2); text-transform:uppercase; padding:3px 8px;
+    border:1px solid var(--accent-2); border-radius:3px;
+  }
+  header p{ flex-basis:100%; color:var(--muted); font-size:0.88rem; margin:0; }
+
+  .notice{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:10px 14px; margin-bottom:20px; font-size:0.82rem; color:var(--muted);
+  }
+  .notice b{ color:var(--text); }
+
+  .layout{
+    display:grid;
+    grid-template-columns:minmax(280px,360px) 1fr;
+    gap:20px;
+    align-items:start;
+  }
+  @media (max-width:800px){
+    .layout{ grid-template-columns:1fr; }
+  }
+
+  .panel{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:16px 18px;
+  }
+  .panel + .panel{ margin-top:16px; }
+
+  .panel h2{
+    font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em;
+    color:var(--accent); margin-bottom:12px; font-weight:600;
+  }
+
+  .field{ margin-bottom:14px; }
+  .field:last-child{ margin-bottom:0; }
+  .field label{
+    display:block; font-size:0.78rem; color:var(--muted); margin-bottom:5px;
+  }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+
+  input[type="number"], select{
+    width:100%; padding:8px 10px; border-radius:6px;
+    border:1px solid var(--border); background:var(--bg); color:var(--text);
+    font-family:"IBM Plex Mono", monospace; font-size:0.9rem;
+  }
+  select{ font-family:"IBM Plex Sans", sans-serif; }
+  input[type="number"]:focus, select:focus{
+    outline:2px solid var(--focus); outline-offset:1px;
+  }
+  input[type="number"]:disabled{
+    background:var(--surface-2); color:var(--muted); cursor:not-allowed; opacity:0.75;
+  }
+  input[type="range"]{ width:100%; accent-color:var(--accent-2); }
+  .range-value{ float:right; color:var(--text); font-family:"IBM Plex Mono",monospace; }
+
+  .unit{ color:var(--muted); font-size:0.76rem; margin-left:4px; }
+
+  .divider{ height:1px; background:var(--border); margin:16px 0; }
+
+  /* object shape preview */
+  .shape-preview{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:8px 10px; margin-bottom:14px;
+  }
+  .shape-preview svg{ width:100%; height:auto; display:block; max-height:170px; }
+  .shape-preview rect, .shape-preview circle{
+    transition: x .3s ease, y .3s ease, width .3s ease, height .3s ease, r .3s ease, cx .3s ease, cy .3s ease;
+  }
+  @media (prefers-reduced-motion: reduce){
+    .shape-preview rect, .shape-preview circle{ transition:none; }
+  }
+
+  /* diagram */
+  .diagram-card{ margin-bottom:20px; }
+  .diagram-card svg{ width:100%; height:auto; display:block; max-height:280px; }
+  .diagram-labels{ font-family:"IBM Plex Mono", monospace; }
+  .diagram-labels line, .diagram-labels ellipse{
+    transition: x1 .35s cubic-bezier(.4,0,.2,1), x2 .35s cubic-bezier(.4,0,.2,1),
+                y1 .35s cubic-bezier(.4,0,.2,1), y2 .35s cubic-bezier(.4,0,.2,1),
+                cx .35s cubic-bezier(.4,0,.2,1), cy .35s cubic-bezier(.4,0,.2,1),
+                rx .35s cubic-bezier(.4,0,.2,1), ry .35s cubic-bezier(.4,0,.2,1);
+  }
+  .diagram-labels text{ transition: x .35s cubic-bezier(.4,0,.2,1), y .35s cubic-bezier(.4,0,.2,1); }
+  @media (prefers-reduced-motion: reduce){
+    .diagram-labels line, .diagram-labels ellipse, .diagram-labels text{ transition:none; }
+  }
+  .diagram-caption{
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;
+    margin-top:10px; font-size:0.78rem; color:var(--muted);
+  }
+  .diagram-caption span b{ color:var(--text); font-family:"IBM Plex Mono",monospace; }
+
+  /* results grid */
+  .results{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:12px;
+  }
+  .card{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px;
+  }
+  .card .label{ font-size:0.74rem; color:var(--muted); margin-bottom:6px; }
+  .card .value{ font-size:1.25rem; font-weight:600; font-family:"IBM Plex Mono",monospace; }
+  .card .sub{ font-size:0.76rem; color:var(--muted); margin-top:3px; }
+
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    font-size:0.72rem; font-weight:600; padding:3px 9px; border-radius:999px;
+    letter-spacing:0.02em;
+  }
+  .chip.ok{ background:var(--ok-soft); color:var(--ok); }
+  .chip.bad{ background:var(--danger-soft); color:var(--danger); }
+  .chip.warn{ background:var(--accent-soft); color:var(--accent); }
+  .chip::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  .formula-box{
+    font-family:"IBM Plex Mono", monospace; font-size:0.8rem; line-height:1.85;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px;
+    padding:12px 14px; overflow-x:auto; color:var(--text);
+  }
+  .formula-box .fname{ color:var(--accent-2); }
+  .formula-box .fresult{ color:var(--accent); font-weight:600; }
+
+  footer{ margin-top:24px; font-size:0.76rem; color:var(--muted); text-align:center; }
+
+  header{ position:relative; }
+  .admin-trigger{
+    position:absolute; top:-4px; right:-2px; width:30px; height:30px;
+    border:none; background:transparent; padding:0; margin:0;
+    opacity:0; cursor:default; border-radius:50%;
+  }
+  .admin-trigger:hover, .admin-trigger:focus-visible{
+    opacity:0.12; background:var(--accent); cursor:pointer; outline:none;
+  }
+  .admin-trigger{ transition:none; }
+  .admin-trigger.holding{
+    opacity:0.32; background:var(--accent);
+    transition: opacity 5s linear, transform 5s linear;
+    transform:scale(1.15);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .admin-trigger.holding{ transition:none; }
+  }
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(0,0,0,0.45);
+    display:flex; align-items:center; justify-content:center;
+    padding:16px; z-index:50;
+  }
+  .modal-box{
+    background:var(--surface); border:1px solid var(--border); border-radius:10px;
+    padding:20px; width:100%; max-width:320px;
+  }
+  .modal-box h3{ margin:0 0 6px; font-size:1rem; }
+  .modal-hint{ font-size:0.78rem; color:var(--muted); margin:0 0 12px; }
+  .modal-box input[type="password"]{
+    width:100%; padding:9px 10px; border-radius:6px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-family:"IBM Plex Mono",monospace; margin-bottom:8px;
+  }
+  .modal-error{ color:var(--danger); font-size:0.78rem; margin-bottom:8px; }
+  .modal-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:4px; }
+  .btn-primary, .btn-secondary{
+    padding:8px 14px; border-radius:6px; font-size:0.85rem; font-weight:600;
+    border:1px solid transparent; cursor:pointer; font-family:"IBM Plex Sans",sans-serif;
+  }
+  .btn-primary{ background:var(--accent); color:#fff; }
+  .btn-secondary{ background:transparent; border-color:var(--border); color:var(--text); }
+
+  .admin-panel{ margin-bottom:20px; border-color:var(--accent-2); }
+  .admin-panel-head{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:4px; }
+  .admin-grid{ display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:12px; }
+  @media (max-width:700px){ .admin-grid{ grid-template-columns:1fr; } }
+  .admin-col h3{ font-size:0.85rem; margin:0 0 8px; color:var(--accent-2); }
+  .admin-form{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+  .admin-form input{
+    padding:8px 10px; border-radius:6px; border:1px solid var(--border);
+    background:var(--bg); color:var(--text); font-family:"IBM Plex Mono",monospace; font-size:0.85rem;
+  }
+  .admin-form .row2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .admin-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; max-height:220px; overflow-y:auto; }
+  .admin-list li{
+    display:flex; justify-content:space-between; align-items:center; gap:8px;
+    background:var(--surface-2); border:1px solid var(--border); border-radius:6px;
+    padding:7px 10px; font-size:0.8rem;
+  }
+  .admin-list li button{
+    border:none; background:transparent; color:var(--danger); cursor:pointer; font-size:0.78rem; font-weight:600;
+  }
+
+  .origin-tag{
+    display:inline-flex; align-items:center; font-size:0.7rem; font-weight:700;
+    padding:1px 6px; border-radius:4px; margin-left:6px; letter-spacing:0.02em;
+    background:var(--danger-soft); color:var(--danger); vertical-align:middle;
+  }
+
+  /* ---- 手機／觸控裝置優化 ---- */
+  @media (max-width:480px){
+    body{ padding-inline:12px; padding-block:14px 32px; }
+    header{ gap:8px 12px; }
+    header h1{ font-size:1.25rem; }
+    .field.row2, .admin-form .row2{ grid-template-columns:1fr; gap:10px; }
+  }
+  /* 輸入框/下拉選單字級至少 16px，避免 iOS Safari 對焦時自動放大整頁 */
+  input[type="number"], input[type="text"], input[type="password"], select, .admin-form input{
+    font-size:max(0.9rem, 16px);
+  }
+  /* 觸控目標至少 44px 高，符合手機好按的基本尺寸 */
+  input[type="number"], input[type="text"], input[type="password"], select,
+  .btn-primary, .btn-secondary, .admin-form input, #camAddBtn, #lensAddBtn{
+    min-height:44px;
+  }
+  .admin-list li button{ padding:6px 10px; min-height:32px; white-space:nowrap; flex-shrink:0; }
+  .admin-list li span{ min-width:0; }
+  input[type="range"]{ min-height:28px; }
+  /* iOS 上原生 select 有時字級偏小，統一覆寫確保跟 input 一致好點擊 */
+  select{ font-size:max(0.9rem, 16px); }
+</style>
+
+</head>
+<body>
+
+<header>
+  <h1>鏡頭選型工作台</h1>
+  <span class="tag">FOV · Focal Length · Bandwidth</span>
+  <p>輸入待測物與精度需求，即時連動出建議 FOV、焦距、解析力與傳輸頻寬是否足夠。規格庫尚未建置時，先用下方通用標準檔位與自訂欄位計算。</p>
+  <button id="adminTrigger" class="admin-trigger" type="button" aria-label="後台管理登入"></button>
+</header>
+
+<!-- 後台管理面板：右上角隱形按鈕按住 5 秒開啟，不需要密碼 -->
+<div id="adminPanel" class="panel admin-panel" hidden>
+  <div class="admin-panel-head">
+    <h2 style="margin:0;">後台管理・型號資料庫</h2>
+    <button type="button" id="adminLogout" class="btn-secondary">關閉</button>
+  </div>
+  <p class="modal-hint" style="margin-top:4px;">在此新增的型號會存進伺服器上的資料庫，所有開啟此頁面的人都能在上方下拉選單看到並選用。</p>
+
+  <div class="admin-grid">
+    <div class="admin-col">
+      <h3>相機型號</h3>
+      <div class="admin-form">
+        <input type="text" id="camBrand" placeholder="廠牌，如 Basler">
+        <input type="text" id="camModel" placeholder="型號，如 acA2440-35um">
+        <div class="row2">
+          <input type="number" id="camSensorW" placeholder="感測器寬 mm" step="0.01">
+          <input type="number" id="camSensorH" placeholder="感測器高 mm" step="0.01">
+        </div>
+        <div class="row2">
+          <input type="number" id="camResH" placeholder="解析度 橫 px" step="1">
+          <input type="number" id="camResV" placeholder="解析度 直 px" step="1">
+        </div>
+        <select id="camOrigin">
+          <option value="">產地／供應鏈（選填，未標註不顯示標籤）</option>
+          <option value="CN">中國製（非紅供應鏈需特別留意）</option>
+          <option value="TW">台灣製</option>
+          <option value="JP">日本製</option>
+          <option value="DE">德國製</option>
+          <option value="US">美國製</option>
+          <option value="CA">加拿大製</option>
+          <option value="other">其他</option>
+        </select>
+        <button type="button" id="camAddBtn" class="btn-primary">新增相機型號</button>
+      </div>
+      <ul class="admin-list" id="camList"></ul>
+    </div>
+
+    <div class="admin-col">
+      <h3>鏡頭型號</h3>
+      <div class="admin-form">
+        <input type="text" id="lensBrand" placeholder="廠牌，如 Computar">
+        <input type="text" id="lensModel" placeholder="型號，如 M1214-MP2">
+        <div class="row2">
+          <input type="number" id="lensFocalInput" placeholder="焦距 mm" step="0.1">
+          <input type="text" id="lensMount" placeholder="接口，如 C-mount">
+        </div>
+        <select id="lensOrigin">
+          <option value="">產地／供應鏈（選填，未標註不顯示標籤）</option>
+          <option value="CN">中國製（非紅供應鏈需特別留意）</option>
+          <option value="TW">台灣製</option>
+          <option value="JP">日本製</option>
+          <option value="DE">德國製</option>
+          <option value="US">美國製</option>
+          <option value="CA">加拿大製</option>
+          <option value="other">其他</option>
+        </select>
+        <button type="button" id="lensAddBtn" class="btn-primary">新增鏡頭型號</button>
+      </div>
+      <ul class="admin-list" id="lensList"></ul>
+    </div>
+  </div>
+  <div id="dbStatusNote" class="modal-hint" style="margin-top:10px;"></div>
+</div>
+
+<div class="panel diagram-card">
+  <h2>光路示意（依目前參數即時連動，非精確等比例）</h2>
+  <svg viewBox="0 0 640 250" role="img" aria-label="鏡頭成像光路示意圖">
+    <defs>
+      <marker id="arrow" viewBox="0 0 8 8" refX="4" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0,0 L8,4 L0,8 z" fill="currentColor"></path>
+      </marker>
+    </defs>
+
+    <!-- Fixed info readouts: own reserved corners, geometry below never enters these zones -->
+    <g font-family="'IBM Plex Mono',monospace" font-size="12" font-weight="600">
+      <!-- 兩列固定座標（上/下），內容依「哪個尺寸較大」動態決定放上面或下面，位置本身永不移動 -->
+      <text id="lblSlotTop" x="14" y="20" text-anchor="start" fill="var(--text)">—</text>
+      <text id="lblSlotBottom" x="14" y="38" text-anchor="start" fill="var(--accent)">—</text>
+      <text id="lblSensorInfo" x="626" y="20" text-anchor="end" fill="var(--accent-2)">sensor —</text>
+      <text id="lblWdInfo" x="626" y="38" text-anchor="end" fill="var(--muted)">WD —</text>
+    </g>
+
+    <g class="diagram-labels" fill="var(--muted)" stroke="none">
+      <!-- actual object size: solid line, drawn left of the FOV line -->
+      <line id="svgObjSolid" x1="44" y1="70" x2="44" y2="180" stroke="var(--text)" stroke-width="2.5"/>
+
+      <!-- FOV: dashed orange line -->
+      <line id="svgObjLine" x1="60" y1="60" x2="60" y2="190" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+
+      <!-- cone lines -->
+      <line id="svgRay1" x1="60" y1="65" x2="330" y2="125" stroke="var(--border)" stroke-width="1.5"/>
+      <line id="svgRay2" x1="60" y1="185" x2="330" y2="125" stroke="var(--border)" stroke-width="1.5"/>
+      <line id="svgRay3" x1="330" y1="125" x2="560" y2="90" stroke="var(--border)" stroke-width="1.5"/>
+      <line id="svgRay4" x1="330" y1="125" x2="560" y2="160" stroke="var(--border)" stroke-width="1.5"/>
+
+      <!-- lens -->
+      <ellipse id="svgLens" cx="330" cy="125" rx="10" ry="46" fill="var(--surface)" stroke="var(--accent-2)" stroke-width="2.5"/>
+      <text id="svgF" x="330" y="60" text-anchor="middle" font-size="12" fill="var(--accent-2)" font-weight="600">f —</text>
+
+      <!-- sensor -->
+      <line id="svgSensorLine" x1="560" y1="80" x2="560" y2="170" stroke="var(--accent-2)" stroke-width="3"/>
+    </g>
+
+    <!-- Fixed bottom row: object / FOV legend + WD span, own reserved zone below all geometry -->
+    <g font-family="'IBM Plex Mono',monospace" font-size="11">
+      <line x1="30" y1="228" x2="30" y2="240" stroke="var(--text)" stroke-width="2.5"/>
+      <text x="38" y="238" text-anchor="start" fill="var(--text)">待測物實際尺寸</text>
+      <line x1="180" y1="228" x2="180" y2="240" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+      <text x="188" y="238" text-anchor="start" fill="var(--accent)">FOV</text>
+      <line id="svgWDLine" x1="60" y1="212" x2="330" y2="212" stroke="var(--muted)" stroke-width="1" marker-start="url(#arrow)" marker-end="url(#arrow)" color="var(--muted)"/>
+      <text id="svgWdOnArrow" x="326" y="206" text-anchor="end" fill="var(--muted)" font-weight="600">WD —</text>
+    </g>
+  </svg>
+  <div class="diagram-caption">
+    <span id="coverageChip"><span class="chip ok">—</span></span>
+    <span>放大倍率 M = f / WD ≈ <b id="capM">—</b></span>
+    <span>物空間解析力 <b id="capRes">—</b> mm/px</span>
+  </div>
+</div>
+
+<div class="layout">
+  <!-- INPUT COLUMN -->
+  <div class="inputs">
+    <div class="panel">
+      <h2>1 · 待測物與精度需求</h2>
+      <div class="field row2">
+        <div>
+          <label for="objW">待測物長度 <span class="unit">mm</span></label>
+          <input type="number" id="objW" value="100" min="0.1" step="0.1">
+        </div>
+        <div>
+          <label for="objH">待測物寬度 <span class="unit">mm</span></label>
+          <input type="number" id="objH" value="80" min="0.1" step="0.1">
+        </div>
+      </div>
+      <div class="field row2">
+        <div>
+          <label for="objDiameter">或輸入圓形直徑 ⌀ <span class="unit">mm</span></label>
+          <input type="number" id="objDiameter" value="100.9" min="0.1" step="0.1">
+        </div>
+        <div>
+          <label for="objArea">或輸入面積 <span class="unit">mm²</span></label>
+          <input type="number" id="objArea" value="8000" min="0.01" step="1">
+        </div>
+      </div>
+      <div class="field" style="margin-top:-6px;">
+        <span style="font-size:0.72rem;color:var(--muted);">寬高／直徑／面積三者互相連動：輸入任一項，另外兩項會依同面積自動換算（僅輸入直徑或面積時，寬高視為等值正方形）。</span>
+      </div>
+
+      <div class="shape-preview">
+        <svg viewBox="0 0 220 150" role="img" aria-label="待測物形狀比例預覽">
+          <g stroke="var(--text)" fill="none">
+            <rect id="shapeRect" x="15" y="20" width="80" height="80" stroke-width="2"/>
+            <circle id="shapeCircle" cx="165" cy="60" r="40" stroke="var(--accent-2)" stroke-width="2"/>
+          </g>
+          <g font-family="'IBM Plex Mono',monospace" font-size="11">
+            <text x="55" y="128" text-anchor="middle" fill="var(--text)" id="shapeRectLabel">矩形 —</text>
+            <text x="165" y="128" text-anchor="middle" fill="var(--accent-2)" id="shapeCircleLabel">⌀ —</text>
+            <text x="110" y="144" text-anchor="middle" fill="var(--muted)" id="shapeAreaLabel">面積 —</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="field">
+        <label for="minFeature">最小可辨識特徵 <span class="unit">mm（瑕疵／字元／線寬）</span></label>
+        <input type="number" id="minFeature" value="0.1" min="0.001" step="0.001">
+      </div>
+      <div class="field">
+        <label for="pxPerFeature">每特徵所需像素數 N<span class="range-value" id="pxPerFeatureVal">3.0 px</span></label>
+        <input type="range" id="pxPerFeature" min="2" max="5" step="0.5" value="3">
+      </div>
+      <div class="field">
+        <label for="margin">FOV 安全邊界係數<span class="range-value" id="marginVal">1.30 ×</span></label>
+        <input type="range" id="margin" min="1.0" max="2.0" step="0.05" value="1.3">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>2 · 感測器</h2>
+      <div class="field">
+        <label for="sensorFormat">光學格式（決定物理尺寸）</label>
+        <select id="sensorFormat">
+          <option value="1/3">1/3" — 4.80 × 3.60 mm（1.3MP 等級，舊款低成本機種）</option>
+          <option value="1/2.5">1/2.5" — 5.76 × 4.29 mm（5MP 等級，早期入門常見）</option>
+          <option value="1/2">1/2" — 6.40 × 4.80 mm（2MP 等級，舊世代常見）</option>
+          <option value="1/1.8" selected>1/1.8" — 7.07 × 5.30 mm（3.1MP，IMX265，業界主流）</option>
+          <option value="2/3">2/3" — 8.45 × 7.07 mm（5MP，IMX264/250，業界最常見機種）</option>
+          <option value="1in">1" — 14.13 × 10.35 mm（12.3MP，IMX253/304，常見高解析機種）</option>
+          <option value="4/3">4/3" — 14.58 × 8.31 mm（16.1MP，IMX542，大靶面高解析機種）</option>
+          <option value="custom">自訂尺寸…</option>
+        </select>
+      </div>
+      <div class="field row2" id="customSensorRow" hidden>
+        <div>
+          <label for="sensorWCustom">感測器寬 <span class="unit">mm</span></label>
+          <input type="number" id="sensorWCustom" value="7.18" step="0.01">
+        </div>
+        <div>
+          <label for="sensorHCustom">感測器高 <span class="unit">mm</span></label>
+          <input type="number" id="sensorHCustom" value="5.32" step="0.01">
+        </div>
+      </div>
+      <div class="field row2">
+        <div>
+          <label for="resH">解析度 橫 <span class="unit">px</span></label>
+          <input type="number" id="resH" value="2448" step="1">
+        </div>
+        <div>
+          <label for="resV">解析度 直 <span class="unit">px</span></label>
+          <input type="number" id="resV" value="2048" step="1">
+        </div>
+      </div>
+      <div class="field" style="margin-top:-6px;">
+        <span style="font-size:0.72rem;color:var(--muted);">切換光學格式會自動帶入該格式業界常用代表機種的解析度（1/1.8"、2/3"、1"、4/3" 取自 Sony Pregius 系列實際感測器規格），之後仍可手動修改為實際相機規格。</span>
+      </div>
+      <div class="field">
+        <label for="bitDepth">位元深度（實際傳輸的每像素資料量）</label>
+        <select id="bitDepth">
+          <option value="1">8-bit（1 byte/px）</option>
+          <option value="1.25">10-bit packed／Mono10p（1.25 byte/px）</option>
+          <option value="1.5">12-bit packed／Mono12p（1.5 byte/px）</option>
+          <option value="2" selected>10-bit unpacked（2 byte/px）</option>
+          <option value="2">12-bit unpacked（2 byte/px）</option>
+          <option value="2">14-bit unpacked（2 byte/px，高階/科研型感測器常見）</option>
+          <option value="2">16-bit（2 byte/px，sCMOS／科學級 CCD 常見）</option>
+          <option value="custom">自訂…</option>
+        </select>
+      </div>
+      <div class="field" id="customBitDepthRow" hidden>
+        <label for="bitDepthCustom">自訂每像素位元數 <span class="unit">bit（byte/px = bit/8）</span></label>
+        <input type="number" id="bitDepthCustom" value="12" min="1" step="0.1">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>3 · 鏡頭與工作距離</h2>
+      <div class="field">
+        <label for="lensFocal">焦距檔位（C-mount 常見值）</label>
+        <select id="lensFocal">
+          <option value="2.8">2.8 mm（超廣角）</option>
+          <option value="4">4 mm</option>
+          <option value="6">6 mm</option>
+          <option value="8">8 mm</option>
+          <option value="9">9 mm</option>
+          <option value="12">12 mm</option>
+          <option value="16" selected>16 mm</option>
+          <option value="25">25 mm</option>
+          <option value="35">35 mm</option>
+          <option value="50">50 mm</option>
+          <option value="75">75 mm</option>
+          <option value="100">100 mm</option>
+          <option value="150">150 mm（望遠）</option>
+          <option value="200">200 mm（望遠）</option>
+          <option value="custom">自訂焦距…</option>
+        </select>
+      </div>
+      <div class="field" id="customLensRow" hidden>
+        <label for="lensFocalCustom">自訂焦距 <span class="unit">mm</span></label>
+        <input type="number" id="lensFocalCustom" value="16" step="0.1">
+      </div>
+      <div class="field">
+        <label for="wd">工作距離 WD <span class="unit">mm（鏡頭前緣到待測物）</span></label>
+        <input type="number" id="wd" value="300" step="1">
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>4 · 傳輸介面</h2>
+      <div class="field">
+        <label for="iface">介面類型（有效頻寬上限，經驗值）</label>
+        <select id="iface">
+          <option value="100" selected>GigE (1000BASE-T) — 100 MB/s</option>
+          <option value="350">USB3 Vision — 350 MB/s</option>
+          <option value="500">5GigE — 500 MB/s</option>
+          <option value="255">Camera Link Base — 255 MB/s</option>
+          <option value="510">Camera Link Medium — 510 MB/s</option>
+          <option value="680">Camera Link Full — 680 MB/s</option>
+          <option value="750">CoaXPress CXP-6 (×1) — 750 MB/s</option>
+          <option value="1000">10GigE — 1000 MB/s</option>
+          <option value="1500">CoaXPress CXP-12 (×1) — 1500 MB/s</option>
+          <option value="custom">自訂頻寬…</option>
+        </select>
+      </div>
+      <div class="field" id="customIfaceRow" hidden>
+        <label for="ifaceCustom">自訂頻寬上限 <span class="unit">MB/s</span></label>
+        <input type="number" id="ifaceCustom" value="100" step="1">
+      </div>
+      <div class="field">
+        <label for="fps">目標幀率 <span class="unit">fps</span></label>
+        <input type="number" id="fps" value="30" step="1">
+      </div>
+      <div class="divider"></div>
+      <div class="field" style="margin-bottom:0;">
+        <label style="margin-bottom:8px;">以目前解析度計算的傳輸速率</label>
+        <div class="mono" id="p4FrameLine" style="font-size:0.95rem;font-weight:600;">—</div>
+        <div class="mono" id="p4RateLine" style="font-size:0.95rem;font-weight:600;margin-top:4px;">—</div>
+        <div style="margin-top:8px;" id="p4Chip">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RESULTS COLUMN -->
+  <div class="outputs">
+    <div class="panel">
+      <h2>計算結果</h2>
+      <div class="results">
+        <div class="card">
+          <div class="label">目標 FOV（含安全邊界）</div>
+          <div class="value" id="outFovTarget">—</div>
+        </div>
+        <div class="card">
+          <div class="label">實際 FOV（依所選焦距/WD）</div>
+          <div class="value" id="outFovActual">—</div>
+          <div class="sub" id="outFovCheck">—</div>
+        </div>
+        <div class="card">
+          <div class="label">理論建議焦距 → 最近標準檔位</div>
+          <div class="value" id="outFocal">—</div>
+        </div>
+        <div class="card">
+          <div class="label">所需最小解析度</div>
+          <div class="value" id="outReqRes">—</div>
+          <div class="sub" id="outResCheck">—</div>
+        </div>
+        <div class="card">
+          <div class="label">物空間解析力（實際）</div>
+          <div class="value" id="outPixelRes">—</div>
+        </div>
+        <div class="card">
+          <div class="label">頻寬需求 / 介面上限</div>
+          <div class="value" id="outBandwidth">—</div>
+          <div class="sub" id="outBwCheck">—</div>
+        </div>
+        <div class="card">
+          <div class="label">單張影像大小 → 傳輸時間</div>
+          <div class="value" id="outFrameSize">—</div>
+          <div class="sub" id="outFrameCheck">—</div>
+        </div>
+        <div class="card">
+          <div class="label">此介面可達張數（依目前解析度）</div>
+          <div class="value" id="outMaxFps">—</div>
+          <div class="sub" id="outMaxFpsCheck">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>公式與代入數值</h2>
+      <div class="formula-box" id="formulaBox"></div>
+    </div>
+  </div>
+</div>
+
+<footer>所有頻寬值為業界常見經驗上限，實際吞吐量依相機廠商韌體與觸發模式而異；鏡頭焦距為理論值，實際成像會受主平面位置與畸變影響。</footer>
+
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  // 感測器物理尺寸：1/1.8"、2/3"、1"、4/3" 已改用業界實際常見機種（Sony Pregius 系列）反推的真實尺寸，
+  // 1/3"、1/2.5"、1/2" 為舊世代 CCD/CMOS 常見規格，仍依慣例標示的光學格式命名。
+  const SENSOR_SIZES = {
+    "1/3":   [4.80, 3.60],
+    "1/2.5": [5.76, 4.29],
+    "1/2":   [6.40, 4.80],
+    "1/1.8": [7.07, 5.30],   // Sony IMX265，2048×1536，3.45µm
+    "2/3":   [8.45, 7.07],   // Sony IMX264/IMX250，2448×2048，3.45µm（業界最常見 5MP 機種之一）
+    "1in":   [14.13, 10.35], // Sony IMX253/IMX304，4096×3000，3.45µm（俗稱「1吋」，實際約 1.1"）
+    "4/3":   [14.58, 8.31]   // Sony IMX542，5320×3032，2.74µm（16MP，Pregius S 4th Gen 大靶面代表機種）
+  };
+  // 各光學格式業界常用代表機種解析度（切換格式時自動帶入，仍可手動覆寫或改選「自訂」）
+  const SENSOR_DEFAULT_RES = {
+    "1/3":   [1280, 960],   // 1.3MP，如 Aptina/onsemi MT9M001 級舊款低成本感測器
+    "1/2.5": [2592, 1944],  // 5MP，如 Aptina MT9P031 級，早期高階入門常見規格
+    "1/2":   [1600, 1200],  // 2MP，舊世代 CCD/CMOS 常見規格
+    "1/1.8": [2048, 1536],  // 3.1MP，Sony IMX265（Pregius，業界主流機種）
+    "2/3":   [2448, 2048],  // 5MP，Sony IMX264/IMX250（Pregius，業界最常見 5MP 機種）
+    "1in":   [4096, 3000],  // 12.3MP，Sony IMX253/IMX304（Pregius 2nd Gen，常見高解析機種）
+    "4/3":   [5320, 3032]   // 16.1MP，Sony IMX542（Pregius S 4th Gen，大靶面高解析代表機種）
+  };
+  const STANDARD_FOCALS = [2.8,4,6,8,9,12,16,25,35,50,75,100,150,200];
+
+  const els = {
+    objW: $("objW"), objH: $("objH"), objDiameter: $("objDiameter"), objArea: $("objArea"),
+    minFeature: $("minFeature"),
+    pxPerFeature: $("pxPerFeature"), pxPerFeatureVal: $("pxPerFeatureVal"),
+    margin: $("margin"), marginVal: $("marginVal"),
+    sensorFormat: $("sensorFormat"), customSensorRow: $("customSensorRow"),
+    sensorWCustom: $("sensorWCustom"), sensorHCustom: $("sensorHCustom"),
+    resH: $("resH"), resV: $("resV"), bitDepth: $("bitDepth"),
+    customBitDepthRow: $("customBitDepthRow"), bitDepthCustom: $("bitDepthCustom"),
+    lensFocal: $("lensFocal"), customLensRow: $("customLensRow"), lensFocalCustom: $("lensFocalCustom"),
+    wd: $("wd"),
+    iface: $("iface"), customIfaceRow: $("customIfaceRow"), ifaceCustom: $("ifaceCustom"),
+    fps: $("fps")
+  };
+
+  function fmt(n, d=2){
+    if (!isFinite(n)) return "—";
+    return n.toLocaleString(undefined, {minimumFractionDigits:d, maximumFractionDigits:d});
+  }
+
+  function nearestFocal(f){
+    return STANDARD_FOCALS.reduce((a,b) => Math.abs(b-f) < Math.abs(a-f) ? b : a);
+  }
+
+  // 資料庫型號快取：id -> {brand, model, sensorW, sensorH, resH, resV} / {brand, model, focalMm, mount}
+  let cameraModels = {};
+  let lensModels = {};
+
+  // ================== GitHub Pages 靜態版：本機瀏覽器儲存（localStorage）==================
+  // 這個版本沒有後端伺服器，型號資料庫存在「這台瀏覽器」的 localStorage 裡，
+  // 只有你自己看得到、改得到，不會同步給別人（跟 NAS 自架版的共用資料庫不同）。
+  // 第一次開啟會用下面內建的種子資料（34 款相機／17 款鏡頭）初始化。
+  const SEED_DATA = {"cameras":{"alliedvision-alvium1800u507-imx264":{"brand":"Allied Vision","model":"Alvium 1800 U-507 (Sony IMX264)","origin":"DE","resH":2464,"resV":2056,"sensorH":7.1,"sensorW":8.5},"basler-a2a1920-51gmbas-imx392":{"brand":"Basler","model":"ace 2 a2A1920-51gmBAS (Sony IMX392)","origin":"DE","resH":1920,"resV":1200,"sensorH":4.1,"sensorW":6.6},"basler-a2a4504-5gmbas-imx541":{"brand":"Basler","model":"ace 2 a2A4504-5gmBAS (Sony IMX541)","origin":"DE","resH":4504,"resV":4504,"sensorH":12.34,"sensorW":12.34},"basler-aca1300-60gm-ev76c560":{"brand":"Basler","model":"ace acA1300-60gm (e2v EV76C560)","origin":"DE","resH":1282,"resV":1026,"sensorH":5.4,"sensorW":6.8},"basler-aca2440-20gm-imx264":{"brand":"Basler","model":"ace acA2440-20gm/gc (Sony IMX264)","origin":"DE","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45},"basler-daa3840-45um-imx334":{"brand":"Basler","model":"dart daA3840-45um (Sony IMX334)","origin":"DE","resH":3840,"resV":2160,"sensorH":4.32,"sensorW":7.68},"daheng-mer2-1220-imx226":{"brand":"Daheng Imaging","model":"MER2-1220-9GM/GC (Sony IMX226)","origin":"CN","resH":4000,"resV":3000,"sensorH":5.55,"sensorW":7.4},"daheng-mer2-2000-imx183":{"brand":"Daheng Imaging","model":"MER2-2000-6GM/19U3M (Sony IMX183)","origin":"CN","resH":5496,"resV":3672,"sensorH":8.76,"sensorW":13.13},"daheng-mer2-503-imx264":{"brand":"Daheng Imaging","model":"MER2-503-23GM/36U3M (Sony IMX264)","origin":"CN","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45},"dahua-mv-a3a20m-imx226":{"brand":"Dahua (大華)","model":"DH-MV-A3A20M/CG8E (Sony IMX226)","origin":"CN","resH":4000,"resV":3000,"sensorH":5.55,"sensorW":7.4},"dahua-mv-a5131cg75e":{"brand":"Dahua (大華)","model":"DH-MV-A5131CG75E","origin":"CN","resH":1280,"resV":1024,"sensorH":4.8,"sensorW":6.4},"dalsa-genie-nano-m2450-imx250":{"brand":"Teledyne DALSA","model":"Genie Nano M2450/C2450 (Sony IMX250)","origin":"CA","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45},"flir-bfs-u3-51s5m-imx250":{"brand":"Teledyne FLIR","model":"Blackfly S BFS-U3-51S5M/C (Sony IMX250)","origin":"US","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45},"hikrobot-mv-ch120-imx304":{"brand":"Hikrobot","model":"MV-CH120-10GM/UM (Sony IMX304)","origin":"CN","resH":4096,"resV":3000,"sensorH":10.35,"sensorW":14.13},"hikrobot-mv-cs016-imx273":{"brand":"Hikrobot","model":"MV-CS016-10GM/UM (Sony IMX273)","origin":"CN","resH":1440,"resV":1080,"sensorH":3.73,"sensorW":4.97},"hikrobot-mv-cs050-imx264":{"brand":"Hikrobot","model":"MV-CS050-10GM/UC (Sony IMX264)","origin":"CN","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45},"hikrobot-mv-cs060-imx178":{"brand":"Hikrobot","model":"MV-CS060-10GM/UC-PRO (Sony IMX178)","origin":"CN","resH":3072,"resV":2048,"sensorH":4.92,"sensorW":7.37},"hikrobot-mv-cs200-imx183":{"brand":"Hikrobot","model":"MV-CS200-10GM/GC (Sony IMX183)","origin":"CN","resH":5472,"resV":3648,"sensorH":8.76,"sensorW":13.13},"huaray-a5501cg20e":{"brand":"HuaRay 華睿科技 (Dahua/Irayple)","model":"A5501CG20E (onsemi PYTHON 5000)","origin":"CN","resH":2592,"resV":2048,"sensorH":9.83,"sensorW":12.44},"ids-gv5280cp-imx264":{"brand":"IDS Imaging","model":"GV-5280CP-M-GL (Sony IMX264)","origin":"DE","resH":2456,"resV":2054,"sensorH":7.07,"sensorW":8.45},"ids-ui5280fa-imx264":{"brand":"IDS Imaging","model":"UI-5280FA-M/C uEye (Sony IMX264)","origin":"DE","resH":2456,"resV":2054,"sensorH":7.07,"sensorW":8.45},"lucid-atlas-123mp-imx253":{"brand":"LUCID Vision Labs","model":"Atlas 12.3MP (Sony IMX253)","origin":"CA","resH":4096,"resV":3000,"sensorH":10.35,"sensorW":14.13},"lucid-triton-123mp-imx304":{"brand":"LUCID Vision Labs","model":"Triton 12.3MP (Sony IMX304)","origin":"CA","resH":4096,"resV":3000,"sensorH":10.35,"sensorW":14.13},"lucid-triton-162mp-imx542":{"brand":"LUCID Vision Labs","model":"Triton 16.2MP (Sony IMX542)","origin":"CA","resH":5320,"resV":3032,"sensorH":8.31,"sensorW":14.58},"lucid-triton-16mp-imx273":{"brand":"LUCID Vision Labs","model":"Triton 1.6MP (Sony IMX273)","origin":"CA","resH":1440,"resV":1080,"sensorH":3.73,"sensorW":4.97},"lucid-triton-32mp-imx265":{"brand":"LUCID Vision Labs","model":"Triton 3.2MP (Sony IMX265)","origin":"CA","resH":2048,"resV":1536,"sensorH":5.3,"sensorW":7.07},"lucid-triton2-50mp-imx264":{"brand":"LUCID Vision Labs","model":"Triton2 5.0MP (Sony IMX264)","origin":"CA","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45},"luxonis-oak-d-pro-w-ar0234":{"brand":"Luxonis","model":"OAK-D Pro W (onsemi AR0234, global shutter)","origin":"US","resH":1920,"resV":1200,"sensorH":3.6,"sensorW":5.76},"luxonis-oak-ffc-imx378":{"brand":"Luxonis","model":"OAK-FFC IMX378 (Sony IMX378, 12.3MP)","origin":"US","resH":4056,"resV":3040,"sensorH":4.71,"sensorW":6.29},"luxonis-oak-ffc-imx582":{"brand":"Luxonis","model":"OAK-FFC IMX582 (Sony IMX582, 48MP)","origin":"US","resH":8000,"resV":6000,"sensorH":4.8,"sensorW":6.4},"mindvision-mv-sua1201c":{"brand":"MindVision (迈德威視)","model":"MV-SUA1201C/M","origin":"CN","resH":4000,"resV":3000,"sensorH":5.55,"sensorW":7.4},"mindvision-mv-sua505gc":{"brand":"MindVision (迈德威視)","model":"MV-SUA505GC/M","origin":"CN","resH":2592,"resV":2048,"sensorH":6.55,"sensorW":8.29},"sony-xcg-cg240-imx249":{"brand":"Sony","model":"XCG-CG240/CG240C (Sony IMX249)","origin":"JP","resH":1936,"resV":1216,"sensorH":7.13,"sensorW":11.35},"tis-dmk-33gx264-imx264":{"brand":"The Imaging Source","model":"DMK/DFK 33GX264 (Sony IMX264)","origin":"DE","resH":2448,"resV":2048,"sensorH":7.07,"sensorW":8.45}},"lenses":{"computar-m0814-mp2":{"brand":"Computar","focalMm":8,"model":"M0814-MP2","mount":"C-mount, 2/3\"","origin":"JP"},"computar-m1214-mp2":{"brand":"Computar","focalMm":12,"model":"M1214-MP2","mount":"C-mount, 2/3\"","origin":"JP"},"computar-m1614-mp2":{"brand":"Computar","focalMm":16,"model":"M1614-MP2","mount":"C-mount, 2/3\"","origin":"JP"},"computar-m2514-mp2":{"brand":"Computar","focalMm":25,"model":"M2514-MP2","mount":"C-mount, 2/3\"","origin":"JP"},"computar-m3514-mp2":{"brand":"Computar","focalMm":35,"model":"M3514-MP2","mount":"C-mount, 2/3\"","origin":"JP"},"computar-m5018-mp2":{"brand":"Computar","focalMm":50,"model":"M5018-MP2","mount":"C-mount, 2/3\"","origin":"JP"},"fujinon-hf125sa-1":{"brand":"Fujinon","focalMm":12.5,"model":"HF12.5SA-1","mount":"C-mount, 2/3\"","origin":"JP"},"fujinon-hf25sa-1":{"brand":"Fujinon","focalMm":25,"model":"HF25SA-1","mount":"C-mount, 2/3\"","origin":"JP"},"fujinon-hf35sa-1":{"brand":"Fujinon","focalMm":35,"model":"HF35SA-1","mount":"C-mount, 2/3\"","origin":"JP"},"kowa-lm16hc":{"brand":"Kowa","focalMm":16,"model":"LM16HC","mount":"C-mount, 1\"","origin":"JP"},"kowa-lm25hc":{"brand":"Kowa","focalMm":25,"model":"LM25HC","mount":"C-mount, 1\"","origin":"JP"},"kowa-lm35hc":{"brand":"Kowa","focalMm":35,"model":"LM35HC","mount":"C-mount, 1\"","origin":"JP"},"kowa-lm50hc":{"brand":"Kowa","focalMm":50,"model":"LM50HC","mount":"C-mount, 1\"","origin":"JP"},"kowa-lm8hc":{"brand":"Kowa","focalMm":8,"model":"LM8HC","mount":"C-mount, 1\"","origin":"JP"},"tamron-m118fm06":{"brand":"Tamron","focalMm":6,"model":"M118FM06","mount":"C-mount, 1/1.8\"","origin":"JP"},"tamron-m118fm08":{"brand":"Tamron","focalMm":8,"model":"M118FM08","mount":"C-mount, 1/1.8\"","origin":"JP"},"tamron-m118fm12":{"brand":"Tamron","focalMm":12,"model":"M118FM12","mount":"C-mount, 1/1.8\"","origin":"JP"}}};
+  const LS_KEY = "lensWorkbenchDb_v1";
+
+  function lsReadDb(){
+    try {
+      const raw = localStorage.getItem(LS_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch(e){ /* 忽略壞掉的本機資料，退回種子資料 */ }
+    const fresh = JSON.parse(JSON.stringify(SEED_DATA));
+    try { localStorage.setItem(LS_KEY, JSON.stringify(fresh)); } catch(e){}
+    return fresh;
+  }
+  function lsWriteDb(db){
+    try { localStorage.setItem(LS_KEY, JSON.stringify(db)); } catch(e){
+      alert("儲存失敗：瀏覽器儲存空間可能已滿或處於無痕模式（" + e.message + "）");
+    }
+  }
+  function lsSlugify(brand, model){
+    const base = (String(brand||"") + "-" + String(model||"")).toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    const rand = Math.random().toString(16).slice(2, 8);
+    return (base || "item") + "-" + rand;
+  }
+  const LocalDB = {
+    getCameras(){ return lsReadDb().cameras || {}; },
+    getLenses(){ return lsReadDb().lenses || {}; },
+    addCamera(data){
+      if (!data.model || !data.sensorW || !data.sensorH || !data.resH || !data.resV){
+        throw new Error("請完整填寫型號、感測器尺寸與解析度");
+      }
+      const db = lsReadDb();
+      const id = lsSlugify(data.brand, data.model);
+      db.cameras[id] = {
+        brand: String(data.brand||""), model: String(data.model),
+        sensorW: Number(data.sensorW), sensorH: Number(data.sensorH),
+        resH: parseInt(data.resH,10), resV: parseInt(data.resV,10),
+        origin: data.origin || ""
+      };
+      lsWriteDb(db);
+      return { id, data: db.cameras[id] };
+    },
+    deleteCamera(id){
+      const db = lsReadDb();
+      delete db.cameras[id];
+      lsWriteDb(db);
+    },
+    addLens(data){
+      if (!data.model || !data.focalMm){
+        throw new Error("請至少填寫型號與焦距");
+      }
+      const db = lsReadDb();
+      const id = lsSlugify(data.brand, data.model);
+      db.lenses[id] = {
+        brand: String(data.brand||""), model: String(data.model),
+        focalMm: Number(data.focalMm), mount: String(data.mount||""),
+        origin: data.origin || ""
+      };
+      lsWriteDb(db);
+      return { id, data: db.lenses[id] };
+    },
+    deleteLens(id){
+      const db = lsReadDb();
+      delete db.lenses[id];
+      lsWriteDb(db);
+    }
+  };
+
+  function currentSensor(){
+    const v = els.sensorFormat.value;
+    if (v === "custom"){
+      return [parseFloat(els.sensorWCustom.value)||0.01, parseFloat(els.sensorHCustom.value)||0.01];
+    }
+    if (v.startsWith("db:")){
+      const m = cameraModels[v.slice(3)];
+      return m ? [m.sensorW, m.sensorH] : [0.01, 0.01];
+    }
+    return SENSOR_SIZES[v];
+  }
+  function currentFocal(){
+    const v = els.lensFocal.value;
+    if (v === "custom") return parseFloat(els.lensFocalCustom.value)||0.01;
+    if (v.startsWith("db:")){
+      const m = lensModels[v.slice(3)];
+      return m ? m.focalMm : 0.01;
+    }
+    return parseFloat(v);
+  }
+  function currentIfaceLimit(){
+    const v = els.iface.value;
+    if (v === "custom") return parseFloat(els.ifaceCustom.value)||0.01;
+    return parseFloat(v);
+  }
+
+  function toggle(el, show){ el.hidden = !show; }
+  function round2(n){ return Math.round(n * 100) / 100; }
+
+  // 寬高／等效圓直徑／面積 三者互相連動：
+  // 直徑 與 面積 用「等面積圓」關係換算（D = 2√(A/π)），並在改動直徑或面積時
+  // 保持目前寬高的長寬比、等比例縮放，回推新的寬與高。
+  function applyAreaToWH(newArea){
+    const curW = parseFloat(els.objW.value) || 0;
+    const curH = parseFloat(els.objH.value) || 0;
+    if (curW > 0 && curH > 0){
+      const scale = Math.sqrt(newArea / (curW * curH));
+      els.objW.value = round2(curW * scale);
+      els.objH.value = round2(curH * scale);
+    } else {
+      const side = round2(Math.sqrt(newArea));
+      els.objW.value = side;
+      els.objH.value = side;
+    }
+  }
+  els.objDiameter.addEventListener("input", () => {
+    const D = parseFloat(els.objDiameter.value) || 0;
+    applyAreaToWH(Math.PI * (D / 2) ** 2);
+  });
+  els.objArea.addEventListener("input", () => {
+    const A = parseFloat(els.objArea.value) || 0;
+    applyAreaToWH(A);
+  });
+
+  function recalc(){
+    const objW = parseFloat(els.objW.value)||0;
+    const objH = parseFloat(els.objH.value)||0;
+
+    // 由目前寬高回推面積與等效圓直徑，寫回另外兩個欄位（使用者正在打字的欄位不覆寫，避免游標跳動）
+    const liveArea = objW * objH;
+    const liveDiameter = liveArea > 0 ? 2 * Math.sqrt(liveArea / Math.PI) : 0;
+    if (document.activeElement !== els.objArea) els.objArea.value = liveArea ? round2(liveArea) : "";
+    if (document.activeElement !== els.objDiameter) els.objDiameter.value = liveDiameter ? round2(liveDiameter) : "";
+
+    // ---- 形狀比例預覽：矩形與等面積圓用同一個 mm→px 比例尺，可直接比較相對大小 ----
+    {
+      const LEFT_CX = 55, LEFT_CY = 60, LEFT_BOX = 80;   // 矩形容許範圍
+      const RIGHT_CX = 165, RIGHT_CY = 60, RIGHT_BOX = 80; // 圓形容許範圍（直徑）
+      const dims = [objW, objH, liveDiameter].filter(v => v > 0);
+      const scale = dims.length ? Math.min(...dims.map(v => (v === liveDiameter ? RIGHT_BOX : LEFT_BOX) / v)) : 1;
+      const rectW = objW * scale, rectH = objH * scale;
+      const circleR = (liveDiameter / 2) * scale;
+      $("shapeRect").setAttribute("x", LEFT_CX - rectW / 2);
+      $("shapeRect").setAttribute("y", LEFT_CY - rectH / 2);
+      $("shapeRect").setAttribute("width", rectW);
+      $("shapeRect").setAttribute("height", rectH);
+      $("shapeCircle").setAttribute("cx", RIGHT_CX);
+      $("shapeCircle").setAttribute("cy", RIGHT_CY);
+      $("shapeCircle").setAttribute("r", circleR);
+      $("shapeRectLabel").textContent = `矩形 ${fmt(objW,1)}×${fmt(objH,1)} mm`;
+      $("shapeCircleLabel").textContent = `⌀ ${fmt(liveDiameter,1)} mm`;
+      $("shapeAreaLabel").textContent = `面積（兩者相同）${fmt(liveArea,1)} mm²`;
+    }
+    const minFeature = parseFloat(els.minFeature.value)||0.001;
+    const N = parseFloat(els.pxPerFeature.value);
+    const margin = parseFloat(els.margin.value);
+    els.pxPerFeatureVal.textContent = N.toFixed(1) + " px";
+    els.marginVal.textContent = margin.toFixed(2) + " ×";
+
+    toggle(els.customSensorRow, els.sensorFormat.value === "custom");
+    toggle(els.customLensRow, els.lensFocal.value === "custom");
+    toggle(els.customIfaceRow, els.iface.value === "custom");
+    toggle(els.customBitDepthRow, els.bitDepth.value === "custom");
+
+    // 解析度僅在「自訂尺寸」時可手動輸入；選標準光學格式時，解析度固定用該格式代表機種的值
+    const resEditable = els.sensorFormat.value === "custom";
+    els.resH.disabled = !resEditable;
+    els.resV.disabled = !resEditable;
+
+    const [sensorW, sensorH] = currentSensor();
+    const resH = parseFloat(els.resH.value)||1;
+    const resV = parseFloat(els.resV.value)||1;
+    const bytesPerPx = els.bitDepth.value === "custom"
+      ? (parseFloat(els.bitDepthCustom.value) || 8) / 8
+      : parseFloat(els.bitDepth.value);
+    const f = currentFocal();
+    const wd = parseFloat(els.wd.value)||0;
+    const fps = parseFloat(els.fps.value)||0;
+    const ifaceLimit = currentIfaceLimit();
+
+    // --- FOV target ---
+    const fovTargetW = objW * margin;
+    const fovTargetH = objH * margin;
+
+    // --- required resolution ---
+    const reqPixelSize = minFeature / N; // mm/px
+    const reqResH = Math.ceil(fovTargetW / reqPixelSize);
+    const reqResV = Math.ceil(fovTargetH / reqPixelSize);
+
+    // --- required / nearest focal length ---
+    const fRequired = wd > 0 ? (sensorW * wd / fovTargetW) : NaN;
+    const fNearest = isFinite(fRequired) ? nearestFocal(fRequired) : NaN;
+
+    // --- actual FOV using selected lens ---
+    const fovActualW = wd > 0 ? (sensorW * wd / f) : NaN;
+    const fovActualH = wd > 0 ? (sensorH * wd / f) : NaN;
+    const magnification = wd > 0 ? (f / wd) : NaN;
+
+    // --- actual object-space resolution ---
+    const pixelResActual = isFinite(fovActualW) ? (fovActualW / resH) : NaN;
+
+    // 是否真的涵蓋「待測物本身」（不含安全邊界）——這是唯一決定「夠不夠」的判斷基準
+    const coversObject = isFinite(fovActualW)
+      ? (fovActualW >= objW && fovActualH >= objH)
+      : true; // 尚未輸入 WD 時無法判斷，先不標示為未涵蓋
+    // 是否連同安全邊界一起達標（更嚴格，只用來提示「還有沒有餘裕」，不是及格線）
+    const meetsMargin = isFinite(fovActualW)
+      ? (fovActualW >= fovTargetW && fovActualH >= fovTargetH)
+      : true;
+    // 有 WD 就用實際 FOV，否則退回目標 FOV（給圖面與角落文字共用）
+    const fovDisplayW = isFinite(fovActualW) ? fovActualW : fovTargetW;
+    const fovDisplayH = isFinite(fovActualH) ? fovActualH : fovTargetH;
+
+    // --- bandwidth ---
+    const bandwidthMBs = (resH * resV * bytesPerPx * fps) / 1e6;
+    const maxFps = (ifaceLimit * 1e6) / (resH * resV * bytesPerPx);
+
+    // --- single-frame image size & transfer time (independent of target fps) ---
+    const frameSizeMB = (resH * resV * bytesPerPx) / 1e6;      // MB per frame
+    const frameSizeMb = frameSizeMB * 8;                        // Mb (bit) per frame
+    const transferTimeMs = (frameSizeMB / ifaceLimit) * 1000;   // ms per frame at interface limit
+
+    // ---- render results ----
+    $("outFovTarget").textContent = `${fmt(fovTargetW,1)} × ${fmt(fovTargetH,1)} mm`;
+
+    if (isFinite(fovActualW)){
+      $("outFovActual").textContent = `${fmt(fovActualW,1)} × ${fmt(fovActualH,1)} mm`;
+      $("outFovCheck").innerHTML = !coversObject
+        ? `<span class="chip bad">FOV 不足，物體會超出視野</span>`
+        : meetsMargin
+          ? `<span class="chip ok">涵蓋待測物（含安全邊界）</span>`
+          : `<span class="chip warn">涵蓋待測物，但未達安全邊界目標</span>`;
+    } else {
+      $("outFovActual").textContent = "請輸入 WD";
+      $("outFovCheck").innerHTML = "";
+    }
+
+    if (isFinite(fRequired)){
+      $("outFocal").innerHTML = `${fmt(fRequired,1)} mm <span class="mono" style="color:var(--muted);font-size:0.85rem">→ ${fNearest} mm 檔位</span>`;
+    } else {
+      $("outFocal").textContent = "請輸入 WD";
+    }
+
+    $("outReqRes").textContent = `${reqResH.toLocaleString()} × ${reqResV.toLocaleString()} px`;
+    const resEnough = resH >= reqResH && resV >= reqResV;
+    $("outResCheck").innerHTML = resEnough
+      ? `<span class="chip ok">目前解析度足夠</span>`
+      : `<span class="chip bad">目前解析度不足</span>`;
+
+    if (isFinite(pixelResActual)){
+      $("outPixelRes").textContent = `${fmt(pixelResActual,4)} mm/px`;
+    } else {
+      $("outPixelRes").textContent = "—";
+    }
+
+    $("outBandwidth").innerHTML = `${fmt(bandwidthMBs,1)} <span class="mono" style="color:var(--muted);font-size:0.85rem">/ ${fmt(ifaceLimit,0)} MB/s</span>`;
+    const bwOk = bandwidthMBs <= ifaceLimit;
+    $("outBwCheck").innerHTML = bwOk
+      ? `<span class="chip ok">頻寬足夠</span>`
+      : `<span class="chip bad">超出上限，該解析度下最高約 ${fmt(maxFps,1)} fps</span>`;
+
+    $("outFrameSize").innerHTML = `${fmt(frameSizeMB,2)} MB <span class="mono" style="color:var(--muted);font-size:0.85rem">→ ${fmt(transferTimeMs,2)} ms/張</span>`;
+    $("outFrameCheck").innerHTML = `依 ${fmt(ifaceLimit,0)} MB/s 頻寬換算，理論最高 <b class="mono">${fmt(maxFps,1)}</b> fps（${fmt(frameSizeMb,1)} Mb/張）`;
+
+    $("outMaxFps").innerHTML = `${fmt(maxFps,1)} <span class="mono" style="color:var(--muted);font-size:0.85rem">張/秒</span>`;
+    $("outMaxFpsCheck").innerHTML = bwOk
+      ? `<span class="chip ok">目標 ${fmt(fps,0)} fps 在上限內</span>`
+      : `<span class="chip bad">目標 ${fmt(fps,0)} fps 超過上限</span>`;
+
+    // ---- section 4 inline readout: 目前解析度下的傳輸速率 ----
+    $("p4FrameLine").textContent = `單張 ${resH.toLocaleString()}×${resV.toLocaleString()} px = ${fmt(frameSizeMB,2)} MB / ${fmt(transferTimeMs,2)} ms`;
+    $("p4RateLine").innerHTML = `@ ${fmt(fps,0)} fps 需求 <span style="color:${bwOk?'var(--ok)':'var(--danger)'}">${fmt(bandwidthMBs,1)} MB/s</span> ／ 介面上限 ${fmt(ifaceLimit,0)} MB/s`;
+    $("p4Chip").innerHTML = bwOk
+      ? `<span class="chip ok">頻寬足夠，此介面最高可達 ${fmt(maxFps,1)} 張/秒</span>`
+      : `<span class="chip bad">超出頻寬，此介面最高只能 ${fmt(maxFps,1)} 張/秒</span>`;
+
+    // ---- diagram ----
+    // 設計原則：所有文字都釘在固定座標（四個角落 + 底部圖例列），永遠不隨線條變化移動，
+    // 幾何線條的可移動範圍事先算好留在文字區之外，兩者互不相犯，無論參數怎麼調都不會疊字。
+    const CENTER_Y = 125;
+    const LENS_X = 330;
+    const SENSOR_X = 560;
+    const OBJ_X_NEAR = 270;  // WD 小 → 待測物靠近鏡頭
+    const OBJ_X_FAR = 40;    // WD 大 → 待測物遠離鏡頭（留邊界給左上角文字）
+
+    const wdT = wd / (wd + 400); // 0..~0.9，漸近避免碰到鏡頭
+    const objX = OBJ_X_NEAR - wdT * (OBJ_X_NEAR - OBJ_X_FAR); // FOV 橘線 x 座標
+    const solidX = Math.max(24, objX - 20); // 待測物實線畫在橘線左邊
+
+    // 幾何振幅上限已預先算好，維持在 y:50~200 之間，不會碰到 y<40（角落文字）或 y>210（底部圖例）
+    const scaleH = mm => 15 + 60 * (1 - 1 / (1 + mm / 50));
+    const fovHalf = scaleH(fovDisplayH);
+    const objHalfActual = scaleH(objH); // 待測物「實際」尺寸，不含安全邊界
+    const sensorHalf = 15 + 45 * (1 - 1 / (1 + sensorH / 6));
+    const lensRy = Math.max(28, Math.min(75, (fovHalf + sensorHalf) / 2 * 0.95));
+
+    $("svgObjSolid").setAttribute("x1", solidX); $("svgObjSolid").setAttribute("x2", solidX);
+    $("svgObjSolid").setAttribute("y1", CENTER_Y - objHalfActual); $("svgObjSolid").setAttribute("y2", CENTER_Y + objHalfActual);
+    $("svgObjSolid").setAttribute("stroke", coversObject ? "var(--text)" : "var(--danger)");
+
+    $("svgObjLine").setAttribute("x1", objX); $("svgObjLine").setAttribute("x2", objX);
+    $("svgObjLine").setAttribute("y1", CENTER_Y - fovHalf); $("svgObjLine").setAttribute("y2", CENTER_Y + fovHalf);
+
+    $("svgRay1").setAttribute("x1", objX); $("svgRay1").setAttribute("y1", CENTER_Y - fovHalf);
+    $("svgRay1").setAttribute("x2", LENS_X); $("svgRay1").setAttribute("y2", CENTER_Y);
+    $("svgRay2").setAttribute("x1", objX); $("svgRay2").setAttribute("y1", CENTER_Y + fovHalf);
+    $("svgRay2").setAttribute("x2", LENS_X); $("svgRay2").setAttribute("y2", CENTER_Y);
+    $("svgRay3").setAttribute("x1", LENS_X); $("svgRay3").setAttribute("y1", CENTER_Y);
+    $("svgRay3").setAttribute("x2", SENSOR_X); $("svgRay3").setAttribute("y2", CENTER_Y - sensorHalf);
+    $("svgRay4").setAttribute("x1", LENS_X); $("svgRay4").setAttribute("y1", CENTER_Y);
+    $("svgRay4").setAttribute("x2", SENSOR_X); $("svgRay4").setAttribute("y2", CENTER_Y + sensorHalf);
+
+    $("svgLens").setAttribute("cy", CENTER_Y);
+    $("svgLens").setAttribute("ry", lensRy);
+    // f 標籤固定放在鏡頭正上方、角落文字區之下的安全帶，隨鏡頭橢圓大小微調但絕不超出該帶
+    $("svgF").setAttribute("y", Math.max(46, CENTER_Y - lensRy - 10));
+
+    $("svgSensorLine").setAttribute("y1", CENTER_Y - sensorHalf);
+    $("svgSensorLine").setAttribute("y2", CENTER_Y + sensorHalf);
+
+    // 底部圖例列固定在 y=208~212，只有 WD 線段的 x1（跟隨待測物）會變動，文字座標本身固定不動
+    $("svgWDLine").setAttribute("x1", objX);
+
+    // ---- 四個固定角落的文字，只換內容，座標永遠不變 ----
+    // 物／FOV 兩列文字：面積較大的那個放上面（y=20），較小的放下面（y=38），位置固定、只換內容
+    {
+      const objLabel = `物 ${fmt(objW,0)}×${fmt(objH,0)} mm`;
+      const objColor = coversObject ? "var(--text)" : "var(--danger)";
+      const fovLabel = `FOV ${fmt(fovDisplayW,0)}×${fmt(fovDisplayH,0)} mm${isFinite(fovActualW) ? "" : "（目標）"}`;
+      const fovColor = "var(--accent)";
+      const objArea2 = objW * objH;
+      const fovArea2 = fovDisplayW * fovDisplayH;
+      const objOnTop = objArea2 >= fovArea2;
+      $("lblSlotTop").textContent = objOnTop ? objLabel : fovLabel;
+      $("lblSlotTop").setAttribute("fill", objOnTop ? objColor : fovColor);
+      $("lblSlotBottom").textContent = objOnTop ? fovLabel : objLabel;
+      $("lblSlotBottom").setAttribute("fill", objOnTop ? fovColor : objColor);
+    }
+    $("lblSensorInfo").textContent = `sensor ${fmt(sensorW,2)}×${fmt(sensorH,2)} mm`;
+    $("lblWdInfo").textContent = `f ${fmt(f,1)} mm`;
+    $("svgWdOnArrow").textContent = `WD ${fmt(wd,0)} mm`;
+    $("svgF").textContent = `f = ${fmt(f,1)} mm`;
+
+    $("capM").textContent = isFinite(magnification) ? fmt(magnification,3) : "—";
+    $("capRes").textContent = isFinite(pixelResActual) ? fmt(pixelResActual,4) : "—";
+    $("coverageChip").innerHTML = !isFinite(fovActualW)
+      ? `<span class="chip" style="background:var(--surface-2);color:var(--muted)">未輸入 WD，無法判斷涵蓋</span>`
+      : coversObject
+        ? `<span class="chip ok">FOV 涵蓋待測物</span>`
+        : `<span class="chip bad">FOV 未涵蓋待測物</span>`;
+
+    // ---- formula trace ----
+    const lines = [
+      `<span class="fname">FOV_target</span> = 待測物 × margin = ${fmt(objW,1)} × ${fmt(margin,2)} = <span class="fresult">${fmt(fovTargetW,1)} mm</span> (寬)`,
+      `<span class="fname">所需像素尺寸</span> = 最小特徵 / N = ${fmt(minFeature,3)} / ${N.toFixed(1)} = <span class="fresult">${fmt(reqPixelSize,4)} mm/px</span>`,
+      `<span class="fname">所需解析度</span> = FOV_target / 所需像素尺寸 = ${fmt(fovTargetW,1)} / ${fmt(reqPixelSize,4)} = <span class="fresult">${reqResH.toLocaleString()} px</span>`,
+      wd > 0
+        ? `<span class="fname">建議焦距 f</span> = sensor寬 × WD / FOV_target = ${fmt(sensorW,2)} × ${fmt(wd,0)} / ${fmt(fovTargetW,1)} = <span class="fresult">${fmt(fRequired,1)} mm</span>`
+        : `<span class="fname">建議焦距 f</span> — 需輸入 WD 才能計算`,
+      wd > 0
+        ? `<span class="fname">實際 FOV</span> = sensor寬 × WD / f選定 = ${fmt(sensorW,2)} × ${fmt(wd,0)} / ${fmt(f,1)} = <span class="fresult">${fmt(fovActualW,1)} mm</span>`
+        : `<span class="fname">實際 FOV</span> — 需輸入 WD 才能計算`,
+      `<span class="fname">頻寬需求</span> = 寬 × 高 × byte/px × fps = ${resH.toLocaleString()} × ${resV.toLocaleString()} × ${bytesPerPx} × ${fmt(fps,0)} = <span class="fresult">${fmt(bandwidthMBs,1)} MB/s</span>`,
+      `<span class="fname">單張影像大小</span> = 寬 × 高 × byte/px = ${resH.toLocaleString()} × ${resV.toLocaleString()} × ${bytesPerPx} = <span class="fresult">${fmt(frameSizeMB,2)} MB</span>`,
+      `<span class="fname">單張傳輸時間</span> = 影像大小 / 介面頻寬 = ${fmt(frameSizeMB,2)} / ${fmt(ifaceLimit,0)} = <span class="fresult">${fmt(transferTimeMs,2)} ms</span> → 理論上限 <span class="fresult">${fmt(maxFps,1)} fps</span>`
+    ];
+    $("formulaBox").innerHTML = lines.join("<br>");
+  }
+
+  // 切換光學格式 → 自動帶入該格式代表機種的解析度（仍可手動覆寫）；選資料庫型號則帶入該型號實際解析度
+  els.sensorFormat.addEventListener("change", () => {
+    const v = els.sensorFormat.value;
+    if (v.startsWith("db:")){
+      const m = cameraModels[v.slice(3)];
+      if (m){ els.resH.value = m.resH; els.resV.value = m.resV; }
+      return;
+    }
+    const def = SENSOR_DEFAULT_RES[v];
+    if (def){
+      els.resH.value = def[0];
+      els.resV.value = def[1];
+    }
+  });
+
+  document.querySelectorAll("input, select").forEach(el => {
+    el.addEventListener("input", recalc);
+    el.addEventListener("change", recalc);
+  });
+  recalc();
+
+  // ================== 後台管理：無密碼，靠隱形按鈕降低誤觸機率（GitHub Pages 靜態版）==================
+
+  const adminTrigger = $("adminTrigger");
+  const adminPanel = $("adminPanel");
+
+  const HOLD_MS = 5000;
+  let holdTimer = null;
+  function openAdminEntry(){
+    adminPanel.hidden = false;
+    adminPanel.scrollIntoView({behavior:"smooth", block:"start"});
+  }
+  function startHold(e){
+    e.preventDefault();
+    adminTrigger.classList.add("holding");
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(() => {
+      adminTrigger.classList.remove("holding");
+      openAdminEntry();
+    }, HOLD_MS);
+  }
+  function cancelHold(){
+    clearTimeout(holdTimer);
+    adminTrigger.classList.remove("holding");
+  }
+  adminTrigger.addEventListener("mousedown", startHold);
+  adminTrigger.addEventListener("touchstart", startHold, {passive:false});
+  ["mouseup","mouseleave","touchend","touchcancel"].forEach(evt =>
+    adminTrigger.addEventListener(evt, cancelHold)
+  );
+  $("adminLogout").addEventListener("click", () => { adminPanel.hidden = true; });
+
+  function setDbNote(text){ const el = $("dbStatusNote"); if (el) el.textContent = text; }
+
+  function rebuildSelectDbGroup(selectEl, models, prefixLabel){
+    const old = selectEl.querySelector('optgroup[data-db-group="1"]');
+    if (old) old.remove();
+    const ids = Object.keys(models);
+    if (!ids.length) return;
+    const group = document.createElement("optgroup");
+    group.label = prefixLabel;
+    group.setAttribute("data-db-group", "1");
+    ids.forEach(id => {
+      const m = models[id];
+      const opt = document.createElement("option");
+      opt.value = "db:" + id;
+      const name = m.brand && m.model ? `${m.brand} ${m.model}` : id;
+      opt.textContent = originTagText(m.origin) + " " + name;
+      group.appendChild(opt);
+    });
+    const customOpt = selectEl.querySelector('option[value="custom"]');
+    selectEl.insertBefore(group, customOpt);
+  }
+
+  // 產地標籤：只標註中國製，其餘產地不特別顯示，維持畫面簡潔
+  function originTagHtml(origin){
+    if (origin !== "CN") return "";
+    return ` <span class="origin-tag" style="background:var(--danger-soft);color:var(--danger);">● 中國製</span>`;
+  }
+  function originTagText(origin){
+    if (origin !== "CN") return "";
+    return "🔴";
+  }
+
+  function renderAdminList(ulEl, models, onDelete, describe){
+    ulEl.innerHTML = "";
+    const ids = Object.keys(models);
+    if (!ids.length){
+      const li = document.createElement("li");
+      li.textContent = "尚無資料";
+      li.style.color = "var(--muted)";
+      ulEl.appendChild(li);
+      return;
+    }
+    ids.forEach(id => {
+      const m = models[id];
+      const li = document.createElement("li");
+      const span = document.createElement("span");
+      span.innerHTML = describe(m) + originTagHtml(m.origin);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "刪除";
+      btn.addEventListener("click", () => onDelete(id));
+      li.appendChild(span);
+      li.appendChild(btn);
+      ulEl.appendChild(li);
+    });
+  }
+
+  function loadCameras(){
+    try {
+      cameraModels = LocalDB.getCameras();
+      rebuildSelectDbGroup(els.sensorFormat, cameraModels, "已建立相機型號");
+      renderAdminList($("camList"), cameraModels, deleteCamera,
+        m => `${m.brand||""} ${m.model||""} — ${fmt(m.sensorW,2)}×${fmt(m.sensorH,2)}mm, ${m.resH}×${m.resV}px`);
+      recalc();
+    } catch (e){
+      setDbNote("讀取相機型號資料庫失敗：" + e.message);
+    }
+  }
+  function loadLenses(){
+    try {
+      lensModels = LocalDB.getLenses();
+      rebuildSelectDbGroup(els.lensFocal, lensModels, "已建立鏡頭型號");
+      renderAdminList($("lensList"), lensModels, deleteLens,
+        m => `${m.brand||""} ${m.model||""} — ${fmt(m.focalMm,1)}mm${m.mount ? "，"+m.mount : ""}`);
+      recalc();
+    } catch (e){
+      setDbNote("讀取鏡頭型號資料庫失敗：" + e.message);
+    }
+  }
+  function initDb(){
+    loadCameras();
+    loadLenses();
+    setDbNote("型號資料庫存在這台瀏覽器裡（localStorage），只有你自己看得到；換瀏覽器或清除瀏覽資料會回到內建的初始清單。");
+  }
+
+  function deleteCamera(id){
+    try {
+      LocalDB.deleteCamera(id);
+      loadCameras();
+    } catch(e){ alert("刪除失敗：" + e.message); }
+  }
+  function deleteLens(id){
+    try {
+      LocalDB.deleteLens(id);
+      loadLenses();
+    } catch(e){ alert("刪除失敗：" + e.message); }
+  }
+
+  $("camAddBtn").addEventListener("click", () => {
+    const data = {
+      brand: $("camBrand").value.trim(),
+      model: $("camModel").value.trim(),
+      sensorW: parseFloat($("camSensorW").value) || 0,
+      sensorH: parseFloat($("camSensorH").value) || 0,
+      resH: parseInt($("camResH").value) || 0,
+      resV: parseInt($("camResV").value) || 0,
+      origin: $("camOrigin").value || ""
+    };
+    try {
+      LocalDB.addCamera(data);
+      ["camBrand","camModel","camSensorW","camSensorH","camResH","camResV"].forEach(id => $(id).value = "");
+      $("camOrigin").value = "";
+      loadCameras();
+    } catch(e){ alert("新增失敗：" + e.message); }
+  });
+
+  $("lensAddBtn").addEventListener("click", () => {
+    const data = {
+      brand: $("lensBrand").value.trim(),
+      model: $("lensModel").value.trim(),
+      focalMm: parseFloat($("lensFocalInput").value) || 0,
+      mount: $("lensMount").value.trim(),
+      origin: $("lensOrigin").value || ""
+    };
+    try {
+      LocalDB.addLens(data);
+      ["lensBrand","lensModel","lensFocalInput","lensMount"].forEach(id => $(id).value = "");
+      $("lensOrigin").value = "";
+      loadLenses();
+    } catch(e){ alert("新增失敗：" + e.message); }
+  });
+
+  initDb();
+})();
+</script>
+
+<script>
+  // 註冊 Service Worker，讓瀏覽器判定這是可安裝的 PWA，並讓頁面外殼可以離線快取。
+  // 注意：Android Chrome 的「安裝 App」自動彈窗需要 HTTPS（或 localhost）才會出現；
+  // 這裡是內網 http://IP:port，仍可以用瀏覽器選單手動「加入主畫面」，只是不會自動跳提示。
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").catch(() => {});
+    });
+  }
+</script>
+
+</body>
+</html>
