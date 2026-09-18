@@ -1,0 +1,12 @@
+{
+  "name": "lens-workbench-nas",
+  "version": "1.0.0",
+  "description": "工業相機/鏡頭選型工作台 - NAS 自架版",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

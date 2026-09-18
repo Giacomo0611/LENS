@@ -1,0 +1,12 @@
+services:
+  lens-workbench:
+    build: .
+    container_name: lens-workbench
+    restart: unless-stopped
+    ports:
+      - "8278:3000"     # 對應 http://10.1.2.61:8278
+    volumes:
+      - ./data:/app/data   # 型號資料庫存在這裡，容器重建/更新都不會遺失
+    environment:
+      - PORT=3000
+      - DATA_DIR=/app/data
